@@ -25,14 +25,14 @@ Some documentation exists for each field in the YAML files, but we can elaborate
 | `ref_path` | single string; path to LBLRTM flux netCDF file that follows the RRTMGP convention, an example of which is provided in the output of the `rrtmgp_garand_atmos` RRTMGP driver in [_g_-point reduction](https://github.com/pernak18/g-point-reduction/tree/master/garand_atmos) |
 | `test_path` | single string; path to RRTMGP flux file (same convention as `ref_path`) with full _k_-distribution results (used for normalizing other model formulations) |
 | `others` | list of paths (strings) to flux files for other RRTMGP formulations; can be any number of files; again, RRTMGP flux file convention |
-| ``do_lw` | LW or SW switch (boolean) |
+| `do_lw` | LW or SW switch (boolean) |
 | `boundaries` | list of strings; YAML variable that is just reused (many times) in the `components` field -- we commonly only focus on the cost at the surface, tropopause, and top-of-atmosphere boundaries, and in this field we just explicitly say that and use the boundaries for many components; this field likely will only need to be changed if users only want to focus on, e.g., the surface for many components |
 | `level_indices` | array indices used in the code to represent the surface, tropopause, and top-of-atmosphere boundaries |
 | `components` | can be any number of components; each field name is the component number/index; each value is a list of 3 elements -- [component name](#naming), levels at which to compute the cost for the component, and the weight of the component in the total cost calculation |
 
 ## Component Naming Convention <a name="naming"></a>
 
-Component names start with a variable name that can be found in the RRTMGP flux files -- `flux_net`, `flux_dn`, `flux_up`, or `heating_rate` for broadband, band the same 4 fields with `band_` prepended for by-band (SW options include `flux_dir_dn` and ``flux_dif_dn` as well). By themselves, these names are considered present-day Garand specifications. They all can have a suffix that represents a "record" or "experiment" name, of which there are 19 (following the [_g_-point combination naming convention](https://github.com/pernak18/g-point-reduction/wiki/LW-Forcing-Number-Convention#g-point-reduction-convention-) for all of the Garand "experiments" or "records" that are used by AER). The mapping of (unit-offset) record index (e.g., in the `flux_net` netCDF array) to record name is:
+Component names start with a variable name that can be found in the RRTMGP flux files -- `flux_net`, `flux_dn`, `flux_up`, or `heating_rate` for broadband, band the same 4 fields with `band_` prepended for by-band (SW options include `flux_dir_dn` and `flux_dif_dn` as well). By themselves, these names are considered present-day Garand specifications. They all can have a suffix that represents a "record" or "experiment" name, of which there are 19 (following the [_g_-point combination naming convention](https://github.com/pernak18/g-point-reduction/wiki/LW-Forcing-Number-Convention#g-point-reduction-convention-) for all of the Garand "experiments" or "records" that are used by AER). The mapping of (unit-offset) record index (e.g., in the `flux_net` netCDF array) to record name is:
 
 1. 'garand' (present day)
 2. 'preind'
