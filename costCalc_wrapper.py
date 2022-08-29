@@ -11,7 +11,7 @@ for path in paths: sys.path.append(path)
 import utils
 
 # local library
-import by_band_lib as redux
+import flux_cost_compute as FCC
 
 # pip/conda installs
 import xarray as xa
@@ -195,27 +195,24 @@ class costCompare:
     """
     """
 
-    with xa.open_dataset(self.refNC) as rDS, \
-      xa.open_dataset(self.testNC) as tDS:
+    print('Calculating full k-distribution cost')
+    # first calculate the cost of full k-distribution RRTMGP
+    isInit = True
+    costDict = FCC.costCalc(
+      self.refNC, self.testNC, self.doLW, self.compNames, 
+      self.compLevs, self.cost0, self.scale, isInit)
 
-      print('Calculating full k-distribution cost')
-      # first calculate the cost of full k-distribution RRTMGP
-      isInit = True
-      costDict = redux.costCalc(
-        rDS, tDS, self.doLW, self.compNames, self.compLevs, 
-        self.cost0, self.scale, isInit)
+    # store initial cost for each component (integrated over all
+    # pressure levels specified by user)
+    for iComp, comp in enumerate(self.compNames):
+      self.cost0[comp] = costDict['allComps'][iComp]
 
-      # store initial cost for each component (integrated over all
-      # pressure levels specified by user)
-      for iComp, comp in enumerate(self.compNames):
-        self.cost0[comp] = costDict['allComps'][iComp]
-
-      # save total cost for full k configuration
-      costKey = 'Full_k'
-      self.totalCost[costKey] = costDict['totalCost']
-      self.costComps[costKey] = {}
-      for comp in self.compNames: self.costComps[costKey][comp] = \
-        costDict['costComps'][comp].sum().values
+    # save total cost for full k configuration
+    costKey = 'Full_k'
+    self.totalCost[costKey] = costDict['totalCost']
+    self.costComps[costKey] = {}
+    for comp in self.compNames: self.costComps[costKey][comp] = \
+      costDict['costComps'][comp].sum().values
     # endwith
 
     # now use initial cost in normalization
@@ -226,14 +223,11 @@ class costCompare:
 
     for i, other in enumerate(self.others):
       print('Calculating cost for {}'.format(other))
-      with xa.open_dataset(self.refNC) as rDS, \
-        xa.open_dataset(other) as oDS:
 
-        isInit = False
-        costDict = redux.costCalc(
-          rDS, oDS, self.doLW, self.compNames, self.compLevs, 
-          self.cost0, self.scale, isInit)
-      # endwith
+      isInit = False
+      costDict = FCC.costCalc(
+        self.refNC, other, self.doLW, self.compNames, 
+        self.compLevs, self.cost0, self.scale, isInit)
 
       print(other)
 
@@ -242,7 +236,7 @@ class costCompare:
       self.costComps[costKey] = {}
       for comp in self.compNames: self.costComps[costKey][comp] = \
         costDict['costComps'][comp].sum().values
-    # end path loop
+    # end other loop
 
     # TO DO: save to a file? CSV?
     # print out cost for each configuration

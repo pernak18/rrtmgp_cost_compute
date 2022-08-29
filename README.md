@@ -6,6 +6,13 @@ Originally designed as part of RRTMGP [_g_-point reduction](https://github.com/p
 2. levels for each component
 3. weights for each component
 
+Clones of this repository are dependent on an [AER GitHub library](https://github.com/AER-RC/common), so cloning with `--recursive` is recommended. Otherwise, uses can use the following commands in the top level of their clone:
+
+```
+git submodule init
+git submodule update
+```
+
 # Comparing Costs
 
 As of this writing, only the longwave (LW) has been tested. More work needs to be done for the shortwave (SW). Consequently, we will only go into detail with the LW.
