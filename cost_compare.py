@@ -17,8 +17,6 @@ import flux_cost_compute as FCC
 import xarray as xa
 import numpy as np
 
-# GLOBAL VARIABLE CONFIGURATION
-
 class costCompare:
   def __init__(self, inYAML):
     """
@@ -36,12 +34,16 @@ class costCompare:
     # populated by readYAML()
     self.refNC, self.testNC, self.others, self.doLW = \
       None, None, None, None
+    self.doFlux, self.exe, self.kNC, self.profNC = \
+      None, None, None, None
+    self.fluxWorkDir, self.outNC = None, None
 
     # populated by costCalc()
     self.scale, self.cost0, self.totalCost, self.costComps = \
       {}, {}, {}, {}
     self.compNames, self.compLevs, self.compWeights = [], {}, {}
     self.outComps = []
+    self.outDF = None
 
     # populated by aliases*()
     self.aliases = {}
@@ -59,6 +61,8 @@ class costCompare:
 
     Level aliases are handled in readYAML()
     """
+
+    print('Mapping user-friendly component names to code names')
 
     # combine broadband and by-band flux/HR fields
     fieldsNC = ['flux_dn', 'flux_up', 'flux_net', 'heating_rate']
@@ -99,6 +103,10 @@ class costCompare:
     """
 
     import yaml
+
+    if not self.aliases['names']: self.aliasesGarandLW()
+
+    print('Reading {}'.format(self.config))
 
     # try to read YAML specs into memory
     with open(self.config, 'r') as inFP:
@@ -175,7 +183,16 @@ class costCompare:
     self.refNC = config['ref_path']
     self.testNC = config['test_path']
     self.others = config['others']
+
+    self.doFlux = config['run_model']['do_fluxes']
+    self.exe = config['run_model']['exe']
+    self.kNC = config['run_model']['k_distribution']
+    self.profNC = config['run_model']['profiles']
+    self.fluxWorkDir = config['run_model']['working_dir']
+    self.outNC = config['run_model']['out_file']
+
     paths = [self.refNC, self.testNC] + self.others
+    paths += [self.exe, self.kNC, self.profNC]
     for path in paths: utils.file_check(path)
 
     self.doLW = config['do_lw']
@@ -188,11 +205,24 @@ class costCompare:
 
   def runRRTMGP(self):
     """
+    Run given RRTMGP executable that calculates fluxes and heating 
+    rates for a given set of profiles and RRTMGP formulation (code 
+    base and k-distribution)
     """
+
+    print('Running RRTMGP')
+    FCC.fluxCompute(
+      self.kNC, self.profNC, self.exe, self.fluxWorkDir, self.outNC)
   # end runRRTMGP
 
   def costCalc(self):
     """
+    Calculate total cost and associated components for each 
+    formulation of RRTMGP provided by user, given a cost 
+    function also defined by user; normalize with respect to 
+    full k-distribution. Cost function (error) is defined as 
+    RRTMGP-LBLRTM for a given set of flux/HR parameters and 
+    levels at given weights for each component
     """
 
     print('Calculating full k-distribution cost')
@@ -238,7 +268,7 @@ class costCompare:
         costDict['costComps'][comp].sum().values
     # end other loop
 
-    # TO DO: save to a file? CSV?
+    # TO DO: save to datafram and print markdown in jupyter nb
     # print out cost for each configuration
     for key in self.totalCost.keys():
       norm = '(Non-normalized)' if 'Full_k' in key else '(Normalized)'
@@ -275,5 +305,6 @@ if __name__ == '__main__':
   cObj = costCompare(args.in_yaml)
   cObj.aliasesGarandLW()
   cObj.readYAML()
+  if self.doFlux: coObj.runRRTMGP()
   cObj.costCalc()
 # endif main()

@@ -1,3 +1,5 @@
 __pycache__
 .ipynb_checkpoints/
 *.nc
+run_rrtmgp
+rrtmgp_garand_atmos
